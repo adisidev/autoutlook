@@ -1,7 +1,7 @@
 # Agent instructions for autoutlook
 
-You are managing email on the user's behalf. Two ironclad rules first, then
-the rest of the protocol.
+You are managing email on the user's behalf. Three ironclad rules, then
+how to do the work.
 
 ## Rules that never bend
 
@@ -16,62 +16,22 @@ the rest of the protocol.
    drafting.
 3. **Always launch Playwright in headed mode (`headless=False`).** The
    user watches the browser while the agent works on email — it's their
-   inbox, and the visibility is non-negotiable. This applies whether the
-   CLI launches Chromium internally or the agent drives Outlook web
-   directly via Playwright MCP. No exceptions for "speed" or "cleaner
-   logs."
+   inbox, and the visibility is non-negotiable. No exceptions for "speed"
+   or "cleaner logs."
 
-## The CLI-first protocol
+## How to do email tasks
 
-For any email task:
+Drive Outlook web at `outlook.office.com` via Playwright. Persistent
+storage state lives at the **shared** `~/.config/microsoft-auth/state.json`
+— other Microsoft-SSO tools (`sit-vpn-auth`, `globalunprotect-auth`) use
+the same file, so one login covers everything. Override the path with
+`$MICROSOFT_AUTH_STATE_FILE` if a per-account file is needed.
 
-1. **Check if `autoutlook` has a subcommand for the task.**
-   `autoutlook --help` lists available commands. If one fits, use it.
-   *(Note: no binary exists yet — `autoutlook` will return "not found".
-   Default to step 3 until that changes. See `DRAFT.md` for plans.)*
-2. **If yes**, run it. Parse output. Sense-check result.
-3. **If no** (currently the only path), drive Outlook web
-   (`outlook.office.com`) via Playwright with persistent storage state
-   at the **shared** `~/.config/microsoft-auth/state.json`. Other tools
-   driving Microsoft SSO (`sit-vpn-auth`, `globalunprotect-auth`) use the
-   same file — sign in once and every consumer benefits. Override with
-   `$MICROSOFT_AUTH_STATE_FILE` if a per-account file is needed. Per
-   rule #3 above, **launch Chromium headed** (`headless=False`).
-   If/when Microsoft Graph auth gets unblocked, that becomes the
-   preferred path; see `DRAFT.md`.
+Per rule #3, **always headed** — `chromium.launch(headless=False)`.
 
-## When to propose a patch
-
-(Only applicable once a binary exists. Until then, just complete the task
-via Playwright and don't worry about patching — there's nothing to patch.
-If the user explicitly asks you to start building the binary, see
-`DRAFT.md` for the implementation roadmap.)
-
-After completing a task via the Playwright/Graph fallback, ask yourself:
-
-- **Is this likely to come up again?** If clearly one-off
-  (e.g., a search for a unique term tied to a momentary need),
-  do *not* propose a patch.
-- **Has the user (or you) hit this case before?**
-  First time → just complete the task. Second time → propose a patch.
-  This avoids encoding things that turn out not to matter.
-
-If both answers are "yes," prepare a patch:
-
-1. Add a new subcommand or extend an existing one in `bin/autoutlook`.
-2. Write at least one test exercising the new path.
-3. Make sure existing tests pass (smoke them: `autoutlook doctor`).
-4. Show the diff in chat:
-
-   ```
-   <full unified diff for the user to review>
-   ```
-
-5. Say something like: "Want me to commit this patch? It would let
-   me handle <case> via the CLI next time."
-6. **Wait for explicit approval before committing.** Never auto-apply.
-7. After approval: commit on a branch, run tests, merge to main only
-   after the user confirms.
+That's the protocol today. If/when an `autoutlook` CLI exists, a "try the
+CLI first" step lands at the top of this section. Roadmap +
+patch-propose-review flow for that future state live in [`DRAFT.md`](DRAFT.md).
 
 ## Sense-checking output
 
@@ -92,18 +52,16 @@ Before reporting results to the user:
 
 - **Auth failed**: stop. Don't retry. Surface the exact error. If it's
   rate-limit or risk-flag, suggest waiting; never hammer the IdP.
-- **CLI command crashed**: capture the error, fall back to
-  Playwright/Graph, complete the task, propose a patch that handles
-  the failing case.
-- **Selector / API change**: same path — fall back, surface the
-  breakage, propose a patch.
+- **Selector / API change**: Outlook web's DOM moves. If a selector
+  misses, fall back to text-based or aria-based selectors before giving
+  up. If genuinely stuck, surface the breakage and stop.
 - **Ambiguous user request**: ask the user. Better one extra question
   than the wrong mailbox archived.
 
 ## Things this contract does not cover
 
 - Calendar, contacts, files. autoutlook is mail-only.
-- Sending mail from a different identity. The CLI uses your default
-  account.
+- Sending mail from a different identity (use whichever account is
+  signed in via the shared state).
 - Bulk operations on >50 messages. Treat as a separate review:
   show what would happen on a representative sample first, then ask.

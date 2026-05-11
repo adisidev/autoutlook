@@ -99,3 +99,32 @@ When you want to start, the canonical first step is: create `bin/autoutlook`,
 make it a uv-script with `auth` and `list` commands, validate against your
 inbox, commit, push. From there each phase is a separate PR. Update this
 file or delete it as needed.
+
+Once the binary exists, add this step to the top of the
+[`AGENTS.md`](AGENTS.md) "How to do email tasks" section:
+
+> Try `autoutlook --help` first; if a subcommand matches the task,
+> use it. Otherwise fall through to driving Outlook web.
+
+## Process for adding a CLI command (once a binary exists)
+
+When an agent does a Playwright-only task that's likely to recur, it
+proposes a patch instead of just doing the work in chat. The flow:
+
+1. **Frequency gate.** First time the case appears → just complete it,
+   no patch. Second time → propose a patch. This avoids codifying things
+   that turn out not to matter.
+2. **Compose the patch.**
+   - Add or extend a subcommand in `bin/autoutlook`.
+   - Write at least one test exercising the new path.
+   - Make sure existing tests still pass (`autoutlook doctor`).
+3. **Show the full unified diff in chat.** Don't bury it in prose.
+4. **Ask explicitly for permission to commit.** Something like
+   "Want me to commit this patch? It would let me handle <case> via the
+   CLI next time."
+5. **Wait for affirmative response.** Never auto-apply. Prior commit
+   approvals do not generalize.
+6. After approval: commit on a branch, run tests, merge to main only
+   after the user confirms it's good.
+
+This is the agent's contribution loop; the user is the sole merger.
