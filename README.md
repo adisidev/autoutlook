@@ -4,11 +4,11 @@ A self-evolving CLI for managing email in Outlook, paired with an agent
 contract that lets an LLM drive it and propose its own extensions when
 the deterministic path falls short.
 
-> **Current state**: design + agent contract only. No working binary yet.
-> Implementation is blocked on Microsoft Graph auth at the author's tenant
-> (admin consent required for the public Graph CLI client; user-level app
-> registration also disabled). See [Status](#status) below. If your tenant
-> doesn't have those restrictions, the path forward is much shorter.
+> **Current state**: docs only. No binary. The agent contract in
+> [`AGENTS.md`](AGENTS.md) is the live half of the project — agents follow
+> it and fall through to driving Outlook web directly via Playwright. That
+> turns out to be enough for most use, so the CLI is deliberately deferred.
+> When/if it becomes worth building, the roadmap is in [`DRAFT.md`](DRAFT.md).
 
 ## Architecture (the 80/20 self-evolving idea)
 
@@ -50,32 +50,25 @@ invoked for an email task.
 
 | Component | State |
 |---|---|
-| Design | ✅ this README + `DESIGN.md` + `AGENTS.md` |
-| Auth path | ⚠️ blocked at author's tenant: user consent to the public Graph CLI client denied (`AADSTS65001`), and user-level app registration disabled. Less locked-down tenants won't hit this. |
-| `bin/autoutlook` | 🟡 stub. Prints "not implemented yet" until auth is unblocked. |
-| Tests | ❌ none yet |
+| Agent contract | ✅ [`AGENTS.md`](AGENTS.md) — live, used by agents today via the Playwright fallback |
+| Design | ✅ [`DESIGN.md`](DESIGN.md) |
+| Future CLI roadmap | 🟡 [`DRAFT.md`](DRAFT.md) — planned commands, auth options, phase order; pick up when there's enough recurring work to justify it |
+| Binary | ❌ intentionally not built. Agent + Playwright + `outlook.office.com` covers everything for now. |
+| Tests | n/a until the binary exists |
 
-**Possible unblocks for Graph API**:
+**Auth status** (relevant when the CLI eventually wants Graph API): blocked
+at the author's tenant — user consent to the public Graph CLI client
+denied (`AADSTS65001`), and user-level app registration also disabled.
+Less locked-down tenants won't hit this. Until then, the Playwright path
+sidesteps the problem entirely.
 
-- Open a ticket asking the tenant admin for tenant-wide consent for
-  `14d82eec-204b-4c2f-b7e8-296a70dab67e` (Microsoft Graph CLI Tools),
-  delegated scopes: `Mail.Read`, `Mail.ReadWrite`, `Mail.Send`,
-  `User.Read`. Risk: refused or slow.
-- Use a different OAuth client ID that's already pre-consented in the
-  tenant (unknown which, if any).
+## Install
 
-**Fallback while Graph is blocked**: agents should drive Outlook web on
-`outlook.office.com` via Playwright with persistent storage state, per
-the protocols in `AGENTS.md`. Same sense-check rules apply.
+There's nothing to install yet. Agents read `AGENTS.md` and act on it —
+that's the whole product right now.
 
-## Install (when there's something to install)
-
-```sh
-git clone https://github.com/adisidev/autoutlook.git ~/src/autoutlook
-ln -sf ~/src/autoutlook/bin/autoutlook ~/.local/bin/autoutlook
-```
-
-Right now this just gets you the stub binary.
+When/if you want the binary: see [`DRAFT.md`](DRAFT.md) for the planned
+implementation roadmap.
 
 ## License
 

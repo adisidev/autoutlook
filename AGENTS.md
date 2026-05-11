@@ -27,17 +27,25 @@ For any email task:
 
 1. **Check if `autoutlook` has a subcommand for the task.**
    `autoutlook --help` lists available commands. If one fits, use it.
+   *(Note: no binary exists yet — `autoutlook` will return "not found".
+   Default to step 3 until that changes. See `DRAFT.md` for plans.)*
 2. **If yes**, run it. Parse output. Sense-check result.
-3. **If no**, fall back to driving Outlook web (`outlook.office.com`)
-   via Playwright with persistent storage state at the **shared**
-   `~/.config/microsoft-auth/state.json`. Other tools driving Microsoft
-   SSO (`sit-vpn-auth`, `globalunprotect-auth`) use the same file — sign
-   in once and every consumer benefits. Override with
-   `$MICROSOFT_AUTH_STATE_FILE` if a per-account file is needed.
-   Or use Microsoft Graph if the auth-path question (see README) ever
-   gets unblocked.
+3. **If no** (currently the only path), drive Outlook web
+   (`outlook.office.com`) via Playwright with persistent storage state
+   at the **shared** `~/.config/microsoft-auth/state.json`. Other tools
+   driving Microsoft SSO (`sit-vpn-auth`, `globalunprotect-auth`) use the
+   same file — sign in once and every consumer benefits. Override with
+   `$MICROSOFT_AUTH_STATE_FILE` if a per-account file is needed. Per
+   rule #3 above, **launch Chromium headed** (`headless=False`).
+   If/when Microsoft Graph auth gets unblocked, that becomes the
+   preferred path; see `DRAFT.md`.
 
 ## When to propose a patch
+
+(Only applicable once a binary exists. Until then, just complete the task
+via Playwright and don't worry about patching — there's nothing to patch.
+If the user explicitly asks you to start building the binary, see
+`DRAFT.md` for the implementation roadmap.)
 
 After completing a task via the Playwright/Graph fallback, ask yourself:
 
