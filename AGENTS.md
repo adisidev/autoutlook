@@ -14,6 +14,12 @@ the rest of the protocol.
    `~/.config/style/` — specifically `email/` and its sub-directories.**
    This is the source of truth for the user's voice. Read it before
    drafting.
+3. **Always launch Playwright in headed mode (`headless=False`).** The
+   user watches the browser while the agent works on email — it's their
+   inbox, and the visibility is non-negotiable. This applies whether the
+   CLI launches Chromium internally or the agent drives Outlook web
+   directly via Playwright MCP. No exceptions for "speed" or "cleaner
+   logs."
 
 ## The CLI-first protocol
 
@@ -23,9 +29,13 @@ For any email task:
    `autoutlook --help` lists available commands. If one fits, use it.
 2. **If yes**, run it. Parse output. Sense-check result.
 3. **If no**, fall back to driving Outlook web (`outlook.office.com`)
-   via Playwright with persistent storage state at
-   `~/.config/microsoft-auth/state.json`. Or Microsoft Graph if the
-   auth-path question (see README) ever gets unblocked.
+   via Playwright with persistent storage state at the **shared**
+   `~/.config/microsoft-auth/state.json`. Other tools driving Microsoft
+   SSO (`sit-vpn-auth`, `globalunprotect-auth`) use the same file — sign
+   in once and every consumer benefits. Override with
+   `$MICROSOFT_AUTH_STATE_FILE` if a per-account file is needed.
+   Or use Microsoft Graph if the auth-path question (see README) ever
+   gets unblocked.
 
 ## When to propose a patch
 
